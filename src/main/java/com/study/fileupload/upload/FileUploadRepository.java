@@ -1,8 +1,10 @@
 package com.study.fileupload.upload;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +12,9 @@ import org.springframework.data.repository.query.Param;
 public interface FileUploadRepository extends JpaRepository<FileUploadRecord, Long> {
 
     Optional<FileUploadRecord> findByPublicId(UUID publicId);
+
+    /** 업로드 목록 화면: 저장된 파일만 최신순 (업로더 구분 없음) */
+    List<FileUploadRecord> findByStatusOrderByIdDesc(String status, Pageable pageable);
 
     /** 요청 수 제한: 최근 창 안의 업로드 요청 수 (요청 1회 = request_id 1개, 명세 6장) */
     @Query("select count(distinct f.requestId) from FileUploadRecord f "

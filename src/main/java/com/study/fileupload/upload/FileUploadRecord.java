@@ -186,4 +186,20 @@ public class FileUploadRecord {
     public String getOriginalName() {
         return originalName;
     }
+
+    public String getExtension() {
+        return extension;
+    }
+
+    public long getSizeBytes() {
+        return sizeBytes;
+    }
+
+    public String getTrustLevel() {
+        return trustLevel;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 }
