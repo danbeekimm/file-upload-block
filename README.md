@@ -41,7 +41,7 @@ STORAGE_MODE=s3 AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... ./gradlew bootRu
 # PowerShell: $env:STORAGE_MODE="s3"; $env:AWS_ACCESS_KEY_ID="..."; $env:AWS_SECRET_ACCESS_KEY="..."; .\gradlew bootRun
 ```
 
-http://localhost:8080 접속 → 정책 관리 + 업로드 화면.
+http://localhost:8080 접속 → 업로드 화면(드래그앤드롭, 진행률, 업로드 목록·다운로드). http://localhost:8080/admin → 차단 관리 화면(고정·커스텀 확장자, IP 차단 해제).
 
 ### 3. 테스트
 
@@ -94,6 +94,7 @@ docker compose up -d   # 통합 테스트가 로컬 PostgreSQL(55432)을 사용
 | GET | `/api/admin/ip-blocks` | 활성 IP 차단 목록 |
 | DELETE | `/api/admin/ip-blocks/{id}` | 차단 수동 해제 |
 | POST | `/api/uploads` | 멀티파트 업로드 (`files`). 파일별 부분 성공 응답 |
+| GET | `/api/uploads?limit=50` | 저장된 파일 목록 최신순 (업로더 구분 없음, 최대 200) |
 | GET | `/api/uploads/{publicId}` | 다운로드. 판정 시 결정된 Content-Type/Disposition + nosniff |
 
 거부 사유 코드와 메시지는 명세 9장을 그대로 구현했습니다.

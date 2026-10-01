@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<!-- 두 화면이 공유하는 head 와 상단 내비. th:replace 로 끼워 넣는다. -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title}">파일 업로드</title>
+    <link rel="stylesheet" as="style" crossorigin
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/js/app.js}"></script>
+</head>
+<body>
+<header class="topbar" th:fragment="nav(active)">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">
+            <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/>
+                </svg>
+            </span>
+            <span>파일 업로드<small>확장자 차단 · 내용 검사</small></span>
+        </a>
+        <nav class="tabs" aria-label="화면 이동">
+            <a th:href="@{/}" th:classappend="${active == 'upload'} ? 'active'" th:attr="aria-current=${active == 'upload'} ? 'page' : null">업로드</a>
+            <a th:href="@{/admin}" th:classappend="${active == 'admin'} ? 'active'" th:attr="aria-current=${active == 'admin'} ? 'page' : null">차단 관리</a>
+        </nav>
+    </div>
+</header>
+</body>
+</html>

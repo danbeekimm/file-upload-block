@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/shell :: head('차단 관리')}"></head>
+<body>
+<header th:replace="~{fragments/shell :: nav('admin')}"></header>
+
+<main class="page">
+    <div>
+        <h1 class="page-title">차단 관리</h1>
+        <p class="page-sub">여기서 바꾼 정책은 저장 즉시 모든 업로드 요청에 적용됩니다. 압축 파일 안의 파일명에도 같은 규칙이 적용됩니다.</p>
+    </div>
+
+    <!-- 정책 로딩 실패: 빈 목록/0-200을 보여주지 않는다 (명세 10-1) -->
+    <section id="load-error" class="card" hidden>
+        <div class="retry">
+            <span>정책을 불러오지 못했습니다.</span>
+            <button type="button" class="btn ghost small" id="btn-retry">다시 시도</button>
+        </div>
+    </section>
+
+    <!-- ---------- 고정 확장자 ---------- -->
+    <section class="card" id="fixed-section" aria-labelledby="fixed-title">
+        <div class="card-head">
+            <div>
+                <h2 id="fixed-title">고정 확장자</h2>
+                <p class="hint">자주 쓰이는 실행 형식입니다. 켜면 차단, 끄면 허용됩니다. 기본값은 모두 꺼짐입니다.</p>
+            </div>
+        </div>
+        <div id="fixed-loading" class="skeleton" aria-hidden="true"><div></div><div style="width:70%"></div></div>
+        <div id="fixed-list" class="switch-grid" role="group" aria-label="고정 확장자 차단 목록"></div>
+        <p id="fixed-msg" class="msg" aria-live="polite"></p>
+    </section>
+
+    <!-- ---------- 커스텀 확장자 ---------- -->
+    <section class="card" id="custom-section" aria-labelledby="custom-title">
+        <div class="card-head">
+            <div>
+                <h2 id="custom-title">커스텀 확장자 <span class="count" id="custom-count" aria-live="polite"></span></h2>
+                <p class="hint">추가하면 바로 차단됩니다. 영문·숫자만, 앞의 점과 대소문자는 자동으로 정리됩니다.</p>
+            </div>
+        </div>
+        <div class="field-row">
+            <input id="custom-input" class="input" type="text" maxlength="20" autocomplete="off" disabled
+                   placeholder="예: sh, ps1, jar" aria-label="추가할 확장자">
+            <button type="button" class="btn primary" id="btn-add" disabled>추가</button>
+        </div>
+        <div class="field-meta">
+            <span>Enter 로도 추가할 수 있습니다</span>
+            <span class="num"><span id="char-count">0</span>/20자</span>
+        </div>
+        <p id="custom-msg" class="msg" aria-live="polite"></p>
+        <div id="chips" class="chips" role="list" aria-label="커스텀 차단 확장자 목록"></div>
+        <div id="custom-empty" class="empty" hidden>
+            <strong>추가한 확장자가 없습니다</strong>
+            고정 목록에 없는 형식을 막고 싶을 때 여기에 추가하세요.
+        </div>
+    </section>
+
+    <!-- ---------- IP 차단 ---------- -->
+    <section class="card" aria-labelledby="ip-title">
+        <div class="card-head">
+            <div>
+                <h2 id="ip-title">IP 일시 차단 <span class="count" id="ip-count"></span></h2>
+                <p class="hint">짧은 시간에 위반 점수가 쌓인 IP는 5분간 업로드가 막힙니다. 시연 중 막혔다면 여기서 바로 풀 수 있습니다.</p>
+            </div>
+            <button type="button" class="btn ghost small" id="btn-ip-refresh">새로고침</button>
+        </div>
+        <div id="ip-loading" class="skeleton" aria-hidden="true"><div></div><div style="width:60%"></div></div>
+        <div id="ip-error" class="retry" hidden>
+            <span>차단 목록을 불러오지 못했습니다.</span>
+            <button type="button" class="btn ghost small" id="btn-ip-retry">다시 시도</button>
+        </div>
+        <div id="ip-empty" class="empty" hidden>
+            <strong>현재 차단된 IP가 없습니다</strong>
+            차단이 생기면 여기에 표시됩니다.
+        </div>
+        <div class="table-wrap" id="ip-wrap" hidden>
+            <table class="files">
+                <thead>
+                <tr>
+                    <th>IP</th>
+                    <th class="right">위반 점수</th>
+                    <th>차단 시각</th>
+                    <th>해제 예정</th>
+                    <th class="right"><span class="sr-only">동작</span></th>
+                </tr>
+                </thead>
+                <tbody id="ip-body"></tbody>
+            </table>
+        </div>
+        <p id="ip-msg" class="msg" aria-live="polite"></p>
+    </section>
+</main>
+
+<script>
+(function () {
+    'use strict';
+    var el = App.el, text = App.text, create = App.create, api = App.api;
+
+    var state = { loaded: false, fixed: [], custom: [], customMax: 200 };
+    function show(id, visible) { el(id).hidden = !visible; }
+
+    /* ---------- 정책 로딩 ---------- */
+    async function loadPolicies() {
+        show('load-error', false);
+        try {
+            var view = await api('/api/admin/policies');
+            state.fixed = view.fixed;
+            state.custom = view.custom;
+            state.customMax = view.customMax;
+            state.loaded = true;
+            renderFixed();
+            renderCustom(view.customCount);
+            show('fixed-loading', false);
+            el('custom-input').disabled = false;
+            updateAddButton();
+        } catch (e) {
+            state.loaded = false;
+            show('load-error', true);
+        }
+    }
+
+    /* ---------- 고정 확장자 (스위치 = label 로 감싼 checkbox) ---------- */
+    function renderFixed() {
+        var list = el('fixed-list');
+        list.innerHTML = '';
+        state.fixed.forEach(function (item) {
+            var label = create('label', 'switch');
+            var left = create('span');
+            left.appendChild(create('span', 'ext', item.extension));
+            var stateText = create('span', 'state', item.blocked ? '차단' : '허용');
+            left.appendChild(stateText);
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.setAttribute('role', 'switch');
+            checkbox.checked = item.blocked;
+            checkbox.setAttribute('aria-label', item.extension + ' 차단');
+            checkbox.addEventListener('change', function () { toggleFixed(item, checkbox, stateText); });
+            label.appendChild(left);
+            label.appendChild(checkbox);
+            label.appendChild(create('span', 'knob'));
+            list.appendChild(label);
+        });
+    }
+
+    async function toggleFixed(item, checkbox, stateText) {
+        var desired = checkbox.checked;
+        checkbox.disabled = true;                    // 요청 중 중복 방지 (명세 10-1)
+        App.setMsg(el('fixed-msg'), '');
+        try {
+            var updated = await api('/api/admin/policies/fixed/' + encodeURIComponent(item.extension), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ blocked: desired, version: item.version })
+            });
+            item.blocked = updated.blocked;          // 서버가 확인한 뒤에만 화면 확정
+            item.version = updated.version;
+            checkbox.checked = updated.blocked;
+            text(stateText, updated.blocked ? '차단' : '허용');
+            App.toast(item.extension + ' ' + (updated.blocked ? '차단' : '허용'));
+        } catch (e) {
+            checkbox.checked = !desired;             // 실패 시 원래 상태로 롤백
+            App.setMsg(el('fixed-msg'), e.message, 'error');
+            if (e.code === 'VERSION_CONFLICT') { await loadPolicies(); }
+        } finally {
+            checkbox.disabled = false;
+        }
+    }
+
+    /* ---------- 커스텀 확장자 ---------- */
+    function renderCustom(count) {
+        text(el('custom-count'), count + ' / ' + state.customMax);
+        var chips = el('chips');
+        chips.innerHTML = '';
+        state.custom.forEach(function (item, index) {
+            var chip = create('span', 'chip');
+            chip.setAttribute('role', 'listitem');
+            chip.appendChild(text(create('span'), item.extension));
+            var remove = create('button');
+            remove.type = 'button';
+            remove.setAttribute('aria-label', item.extension + ' 삭제');
+            remove.appendChild(App.icon('x'));
+            remove.addEventListener('click', function () { removeCustom(item.extension, index); });
+            chip.appendChild(remove);
+            chips.appendChild(chip);
+        });
+        show('custom-empty', state.custom.length === 0);
+        updateAddButton();
+    }
+
+    function updateAddButton() {
+        var full = state.custom.length >= state.customMax;
+        el('btn-add').disabled = !state.loaded || full;
+        el('custom-input').disabled = !state.loaded || full;
+        if (full) { App.setMsg(el('custom-msg'), '삭제 후 추가할 수 있습니다.', 'error'); }
+    }
+
+    async function addCustom() {
+        var input = el('custom-input');
+        var raw = input.value.trim();
+        if (!raw) { return; }
+        el('btn-add').disabled = true;
+        App.setMsg(el('custom-msg'), '');
+        try {
+            var result = await api('/api/admin/policies/custom', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ extension: raw })
+            });
+            state.custom.push({ extension: result.extension });
+            renderCustom(result.count);
+            input.value = '';
+            text(el('char-count'), '0');
+            App.setMsg(el('custom-msg'), result.corrected ? result.extension + '(으)로 정리되어 추가되었습니다.' : result.extension + ' 추가됨', 'ok');
+        } catch (e) {
+            App.setMsg(el('custom-msg'), e.message, 'error');
+        } finally {
+            updateAddButton();
+            input.focus();                            // 추가 후 입력창 포커스 유지 (명세 10-3)
+        }
+    }
+
+    async function removeCustom(extension, index) {
+        try {
+            await api('/api/admin/policies/custom/' + encodeURIComponent(extension), { method: 'DELETE' });
+            state.custom = state.custom.filter(function (c) { return c.extension !== extension; });
+            renderCustom(state.custom.length);
+            App.setMsg(el('custom-msg'), '');
+            App.toast(extension + ' 삭제됨');
+            // 삭제 후 다음 항목으로 포커스 이동 (명세 10-3)
+            var buttons = el('chips').querySelectorAll('button');
+            var target = buttons[Math.min(index, buttons.length - 1)];
+            if (target) { target.focus(); } else { el('custom-input').focus(); }
+        } catch (e) {
+            App.setMsg(el('custom-msg'), e.message, 'error');
+        }
+    }
+
+    /* ---------- IP 차단 ---------- */
+    function renderIpBlocks(items) {
+        var body = el('ip-body');
+        body.innerHTML = '';
+        items.forEach(function (b) {
+            var tr = create('tr');
+            var ipTd = create('td');
+            ipTd.appendChild(text(create('code'), b.clientIp));
+            ipTd.style.fontFamily = 'var(--mono)';
+            var scoreTd = create('td', 'right num');
+            scoreTd.appendChild(App.pill('warn', String(b.score) + '점'));
+            var fromTd = create('td', 'muted num', App.formatDateTime(b.blockedAt));
+            var untilTd = create('td', 'num', App.formatDateTime(b.blockedUntil));
+            var actionTd = create('td', 'right');
+            var release = create('button', 'btn danger small', '해제');
+            release.type = 'button';
+            release.setAttribute('aria-label', b.clientIp + ' 차단 해제');
+            release.addEventListener('click', function () { releaseIp(b, release); });
+            actionTd.appendChild(release);
+            tr.appendChild(ipTd); tr.appendChild(scoreTd); tr.appendChild(fromTd); tr.appendChild(untilTd); tr.appendChild(actionTd);
+            body.appendChild(tr);
+        });
+        text(el('ip-count'), items.length ? items.length + '건' : '');
+        show('ip-empty', items.length === 0);
+        show('ip-wrap', items.length > 0);
+    }
+
+    async function loadIpBlocks() {
+        show('ip-error', false);
+        el('btn-ip-refresh').disabled = true;
+        try {
+            var items = await api('/api/admin/ip-blocks');
+            renderIpBlocks(items);
+        } catch (e) {
+            show('ip-wrap', false); show('ip-empty', false);
+            show('ip-error', true);
+        } finally {
+            show('ip-loading', false);
+            el('btn-ip-refresh').disabled = false;
+        }
+    }
+
+    async function releaseIp(block, button) {
+        button.disabled = true;
+        App.setMsg(el('ip-msg'), '');
+        try {
+            await api('/api/admin/ip-blocks/' + encodeURIComponent(block.id), { method: 'DELETE' });
+            App.toast(block.clientIp + ' 차단 해제');
+            await loadIpBlocks();
+        } catch (e) {
+            button.disabled = false;
+            App.setMsg(el('ip-msg'), e.message, 'error');
+        }
+    }
+
+    /* ---------- 이벤트 ---------- */
+    el('btn-retry').addEventListener('click', loadPolicies);
+    el('btn-add').addEventListener('click', addCustom);
+    el('custom-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); addCustom(); }   // Enter로 추가 (명세 10-3)
+    });
+    el('custom-input').addEventListener('input', function (e) {
+        // 클라이언트는 UX용 즉시 피드백만 — 서버가 같은 정규화를 다시 수행한다 (명세 4-1)
+        var cleaned = e.target.value.replace(/[^A-Za-z0-9.]/g, '');
+        if (cleaned !== e.target.value) { e.target.value = cleaned; }
+        text(el('char-count'), String(e.target.value.length));
+    });
+    el('btn-ip-refresh').addEventListener('click', loadIpBlocks);
+    el('btn-ip-retry').addEventListener('click', loadIpBlocks);
+
+    loadPolicies();
+    loadIpBlocks();
+})();
+</script>
+</body>
+</html>

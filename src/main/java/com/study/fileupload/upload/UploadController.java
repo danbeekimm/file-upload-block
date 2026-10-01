@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,16 @@ public class UploadController {
     public UploadResponse upload(@RequestParam("files") List<MultipartFile> files,
                                  HttpServletRequest request) {
         return uploadService.process(files, actorResolver.resolve(request));
+    }
+
+    /** 업로드 목록 — 저장된 파일만 최신순. 누가 올렸는지는 구분하지 않는다 (인증 미도입). */
+    @GetMapping
+    public List<UploadListItem> list(@RequestParam(defaultValue = "50") int limit) {
+        int size = Math.max(1, Math.min(limit, 200));
+        return fileUploadRepository.findByStatusOrderByIdDesc(FileUploadRecord.STATUS_STORED, PageRequest.of(0, size))
+                .stream()
+                .map(UploadListItem::from)
+                .toList();
     }
 
     /**
