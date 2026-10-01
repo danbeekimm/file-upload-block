@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700" role="img" aria-label="fileupload 데이터베이스 ERD. upload_policy 하나에 extension_rule, policy_change_log, file_upload 가 여러 개 매달리고, ip_block 은 FK 없이 client_ip 로만 file_upload 와 느슨하게 연결된다.">
+<style>
+  text { font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, "D2Coding", monospace; }
+  .table-box   { fill: #ffffff; stroke: #d9dee7; stroke-width: 1; }
+  .table-head  { fill: #e8edf5; }
+  .table-rule  { stroke: #d9dee7; stroke-width: 1; }
+  .table-name  { font-size: 13px; font-weight: 600; fill: #1c2230; }
+  .table-count { font-size: 10.5px; fill: #8a93a3; }
+  .column-name { font-size: 11px; fill: #1c2230; }
+  .column-type { font-size: 11px; fill: #5a6475; }
+  .nullable    { fill: #8a93a3; font-style: italic; }
+  .key-badge   { font-size: 9.5px; font-weight: 600; }
+  .key-pk      { fill: #1f5fa8; }
+  .key-fk      { fill: #b3541e; }
+  .key-uk      { fill: #5b6b85; }
+  .relation        { fill: none; stroke: #1f5fa8; stroke-width: 1.4; }
+  .relation-logical{ fill: none; stroke: #8a93a3; stroke-width: 1.4; stroke-dasharray: 5 4; }
+  .relation-dot    { fill: #ffffff; stroke: #8a93a3; stroke-width: 1.4; }
+  .relation-label  { font-size: 10.5px; fill: #1f5fa8; }
+  .relation-label-muted { font-size: 10.5px; fill: #8a93a3; }
+  .cardinality     { font-size: 11px; font-weight: 600; fill: #1f5fa8; }
+  .legend          { font-size: 11px; fill: #5a6475; }
+</style>
+<rect width="1200" height="700" fill="#f7f8fa"/>
+<polyline points="320,300 390,300 390,126 460,126" class="relation"/>
+<line x1="326" y1="293" x2="326" y2="307" class="relation"/>
+<line x1="331" y1="293" x2="331" y2="307" class="relation"/>
+<line x1="444" y1="126" x2="460" y2="119" class="relation"/>
+<line x1="444" y1="126" x2="460" y2="126" class="relation"/>
+<line x1="444" y1="126" x2="460" y2="133" class="relation"/>
+<line x1="440" y1="119" x2="440" y2="133" class="relation"/>
+<text x="426" y="121" text-anchor="end" class="relation-label">policy_id</text>
+<text x="336" y="295" class="cardinality">1</text>
+<text x="452" y="121" text-anchor="end" class="cardinality">N</text>
+<polyline points="320,334 420,334 420,241 860,241" class="relation"/>
+<line x1="326" y1="327" x2="326" y2="341" class="relation"/>
+<line x1="331" y1="327" x2="331" y2="341" class="relation"/>
+<line x1="844" y1="241" x2="860" y2="234" class="relation"/>
+<line x1="844" y1="241" x2="860" y2="241" class="relation"/>
+<line x1="844" y1="241" x2="860" y2="248" class="relation"/>
+<line x1="840" y1="234" x2="840" y2="248" class="relation"/>
+<text x="826" y="236" text-anchor="end" class="relation-label">policy_id</text>
+<text x="336" y="329" class="cardinality">1</text>
+<text x="852" y="236" text-anchor="end" class="cardinality">N</text>
+<polyline points="320,368 460,368" class="relation"/>
+<line x1="326" y1="361" x2="326" y2="375" class="relation"/>
+<line x1="331" y1="361" x2="331" y2="375" class="relation"/>
+<line x1="444" y1="368" x2="460" y2="361" class="relation"/>
+<line x1="444" y1="368" x2="460" y2="368" class="relation"/>
+<line x1="444" y1="368" x2="460" y2="375" class="relation"/>
+<line x1="440" y1="361" x2="440" y2="375" class="relation"/>
+<text x="426" y="363" text-anchor="end" class="relation-label">policy_id</text>
+<text x="336" y="363" class="cardinality">1</text>
+<text x="452" y="363" text-anchor="end" class="cardinality">N</text>
+<polyline points="740,597 1010,597 1010,482" class="relation-logical"/>
+<circle cx="741" cy="597" r="3.5" class="relation-dot"/>
+<circle cx="1010" cy="481" r="3.5" class="relation-dot"/>
+<text x="752" y="590" class="relation-label-muted">client_ip 문자열로만 연결 · FK 없음</text>
+<g id="table-upload_policy">
+<rect x="40" y="230" width="280" height="208" rx="4" class="table-box"/>
+<rect x="40" y="230" width="280" height="28" rx="4" class="table-head"/>
+<rect x="40" y="254" width="280" height="4" class="table-head"/>
+<line x1="40" y1="258" x2="320" y2="258" class="table-rule"/>
+<text x="50" y="248.5" class="table-name">upload_policy</text>
+<text x="310" y="248.5" text-anchor="end" class="table-count">1 rows</text>
+<text x="50" y="271" class="key-badge key-pk">PK</text>
+<text x="76" y="271" class="column-name">id</text>
+<text x="310" y="271" text-anchor="end" class="column-type">BIGSERIAL</text>
+<text x="50" y="289" class="key-badge key-uk">UK</text>
+<text x="76" y="289" class="column-name">name</text>
+<text x="310" y="289" text-anchor="end" class="column-type">VARCHAR(50)</text>
+<text x="76" y="307" class="column-name nullable">description</text>
+<text x="310" y="307" text-anchor="end" class="column-type nullable">VARCHAR(255)?</text>
+<text x="76" y="325" class="column-name">max_image_bytes</text>
+<text x="310" y="325" text-anchor="end" class="column-type">BIGINT</text>
+<text x="76" y="343" class="column-name">max_file_bytes</text>
+<text x="310" y="343" text-anchor="end" class="column-type">BIGINT</text>
+<text x="76" y="361" class="column-name">max_files_per_request</text>
+<text x="310" y="361" text-anchor="end" class="column-type">SMALLINT</text>
+<text x="76" y="379" class="column-name">max_request_bytes</text>
+<text x="310" y="379" text-anchor="end" class="column-type">BIGINT</text>
+<text x="76" y="397" class="column-name">version</text>
+<text x="310" y="397" text-anchor="end" class="column-type">INT</text>
+<text x="76" y="415" class="column-name">created_at</text>
+<text x="310" y="415" text-anchor="end" class="column-type">TIMESTAMPTZ</text>
+<text x="76" y="433" class="column-name">updated_at</text>
+<text x="310" y="433" text-anchor="end" class="column-type">TIMESTAMPTZ</text>
+</g>
+<g id="table-extension_rule">
+<rect x="460" y="40" width="280" height="172" rx="4" class="table-box"/>
+<rect x="460" y="40" width="280" height="28" rx="4" class="table-head"/>
+<rect x="460" y="64" width="280" height="4" class="table-head"/>
+<line x1="460" y1="68" x2="740" y2="68" class="table-rule"/>
+<text x="470" y="58.5" class="table-name">extension_rule</text>
+<text x="730" y="58.5" text-anchor="end" class="table-count">8 rows</text>
+<text x="470" y="81" class="key-badge key-pk">PK</text>
+<text x="496" y="81" class="column-name">id</text>
+<text x="730" y="81" text-anchor="end" class="column-type">BIGSERIAL</text>
+<text x="470" y="99" class="key-badge key-fk">FK</text>
+<text x="496" y="99" class="column-name">policy_id</text>
+<text x="730" y="99" text-anchor="end" class="column-type">BIGINT</text>
+<text x="470" y="117" class="key-badge key-uk">UK</text>
+<text x="496" y="117" class="column-name">extension</text>
+<text x="730" y="117" text-anchor="end" class="column-type">VARCHAR(20)</text>
+<text x="496" y="135" class="column-name">rule_type</text>
+<text x="730" y="135" text-anchor="end" class="column-type">VARCHAR(10)</text>
+<text x="496" y="153" class="column-name">blocked</text>
+<text x="730" y="153" text-anchor="end" class="column-type">BOOLEAN</text>
+<text x="496" y="171" class="column-name">version</text>
+<text x="730" y="171" text-anchor="end" class="column-type">INT</text>
+<text x="496" y="189" class="column-name">created_at</text>
+<text x="730" y="189" text-anchor="end" class="column-type">TIMESTAMPTZ</text>
+<text x="496" y="207" class="column-name">updated_at</text>
+<text x="730" y="207" text-anchor="end" class="column-type">TIMESTAMPTZ</text>
+</g>
+<g id="table-policy_change_log">
+<rect x="460" y="270" width="280" height="190" rx="4" class="table-box"/>
+<rect x="460" y="270" width="280" height="28" rx="4" class="table-head"/>
+<rect x="460" y="294" width="280" height="4" class="table-head"/>
+<line x1="460" y1="298" x2="740" y2="298" class="table-rule"/>
+<text x="470" y="288.5" class="table-name">policy_change_log</text>
+<text x="730" y="288.5" text-anchor="end" class="table-count">2 rows</text>
+<text x="470" y="311" class="key-badge key-pk">PK</text>
+<text x="496" y="311" class="column-name">id</text>
+<text x="730" y="311" text-anchor="end" class="column-type">BIGSERIAL</text>
+<text x="470" y="329" class="key-badge key-fk">FK</text>
+<text x="496" y="329" class="column-name">policy_id</text>
+<text x="730" y="329" text-anchor="end" class="column-type">BIGINT</text>
+<text x="496" y="347" class="column-name">target</text>
+<text x="730" y="347" text-anchor="end" class="column-type">VARCHAR(20)</text>
+<text x="496" y="365" class="column-name nullable">extension</text>
+<text x="730" y="365" text-anchor="end" class="column-type nullable">VARCHAR(20)?</text>
+<text x="496" y="383" class="column-name">action</text>
+<text x="730" y="383" text-anchor="end" class="column-type">VARCHAR(10)</text>
+<text x="496" y="401" class="column-name nullable">detail</text>
+<text x="730" y="401" text-anchor="end" class="column-type nullable">JSONB?</text>
+<text x="496" y="419" class="column-name nullable">actor_ip</text>
+<text x="730" y="419" text-anchor="end" class="column-type nullable">VARCHAR(45)?</text>
+<text x="496" y="437" class="column-name nullable">user_agent</text>
+<text x="730" y="437" text-anchor="end" class="column-type nullable">VARCHAR(255)?</text>
+<text x="496" y="455" class="column-name">changed_at</text>
+<text x="730" y="455" text-anchor="end" class="column-type">TIMESTAMPTZ</text>
+</g>
+<g id="table-ip_block">
+<rect x="460" y="520" width="280" height="154" rx="4" class="table-box"/>
+<rect x="460" y="520" width="280" height="28" rx="4" class="table-head"/>
+<rect x="460" y="544" width="280" height="4" class="table-head"/>
+<line x1="460" y1="548" x2="740" y2="548" class="table-rule"/>
+<text x="470" y="538.5" class="table-name">ip_block</text>
+<text x="730" y="538.5" text-anchor="end" class="table-count">0 rows</text>
+<text x="470" y="561" class="key-badge key-pk">PK</text>
+<text x="496" y="561" class="column-name">id</text>
+<text x="730" y="561" text-anchor="end" class="column-type">BIGSERIAL</text>
+<text x="496" y="579" class="column-name">client_ip</text>
+<text x="730" y="579" text-anchor="end" class="column-type">VARCHAR(45)</text>
+<text x="496" y="597" class="column-name">score</text>
+<text x="730" y="597" text-anchor="end" class="column-type">SMALLINT</text>
+<text x="496" y="615" class="column-name">blocked_at</text>
+<text x="730" y="615" text-anchor="end" class="column-type">TIMESTAMPTZ</text>
+<text x="496" y="633" class="column-name">blocked_until</text>
+<text x="730" y="633" text-anchor="end" class="column-type">TIMESTAMPTZ</text>
+<text x="496" y="651" class="column-name nullable">released_at</text>
+<text x="730" y="651" text-anchor="end" class="column-type nullable">TIMESTAMPTZ?</text>
+<text x="496" y="669" class="column-name nullable">released_by_ip</text>
+<text x="730" y="669" text-anchor="end" class="column-type nullable">VARCHAR(45)?</text>
+</g>
+<g id="table-file_upload">
+<rect x="860" y="40" width="300" height="442" rx="4" class="table-box"/>
+<rect x="860" y="40" width="300" height="28" rx="4" class="table-head"/>
+<rect x="860" y="64" width="300" height="4" class="table-head"/>
+<line x1="860" y1="68" x2="1160" y2="68" class="table-rule"/>
+<text x="870" y="58.5" class="table-name">file_upload</text>
+<text x="1150" y="58.5" text-anchor="end" class="table-count">6 rows</text>
+<text x="870" y="81" class="key-badge key-pk">PK</text>
+<text x="896" y="81" class="column-name">id</text>
+<text x="1150" y="81" text-anchor="end" class="column-type">BIGSERIAL</text>
+<text x="870" y="99" class="key-badge key-uk">UK</text>
+<text x="896" y="99" class="column-name">public_id</text>
+<text x="1150" y="99" text-anchor="end" class="column-type">UUID</text>
+<text x="896" y="117" class="column-name">request_id</text>
+<text x="1150" y="117" text-anchor="end" class="column-type">UUID</text>
+<text x="870" y="135" class="key-badge key-fk">FK</text>
+<text x="896" y="135" class="column-name">policy_id</text>
+<text x="1150" y="135" text-anchor="end" class="column-type">BIGINT</text>
+<text x="896" y="153" class="column-name">policy_version</text>
+<text x="1150" y="153" text-anchor="end" class="column-type">BIGINT</text>
+<text x="896" y="171" class="column-name">status</text>
+<text x="1150" y="171" text-anchor="end" class="column-type">VARCHAR(10)</text>
+<text x="896" y="189" class="column-name nullable">reject_reason</text>
+<text x="1150" y="189" text-anchor="end" class="column-type nullable">VARCHAR(30)?</text>
+<text x="896" y="207" class="column-name nullable">trust_level</text>
+<text x="1150" y="207" text-anchor="end" class="column-type nullable">VARCHAR(10)?</text>
+<text x="896" y="225" class="column-name">violation_score</text>
+<text x="1150" y="225" text-anchor="end" class="column-type">SMALLINT</text>
+<text x="896" y="243" class="column-name">original_name</text>
+<text x="1150" y="243" text-anchor="end" class="column-type">VARCHAR(255)</text>
+<text x="896" y="261" class="column-name nullable">download_name</text>
+<text x="1150" y="261" text-anchor="end" class="column-type nullable">VARCHAR(255)?</text>
+<text x="896" y="279" class="column-name nullable">extension</text>
+<text x="1150" y="279" text-anchor="end" class="column-type nullable">VARCHAR(20)?</text>
+<text x="896" y="297" class="column-name">size_bytes</text>
+<text x="1150" y="297" text-anchor="end" class="column-type">BIGINT</text>
+<text x="896" y="315" class="column-name nullable">sha256_original</text>
+<text x="1150" y="315" text-anchor="end" class="column-type nullable">CHAR(64)?</text>
+<text x="896" y="333" class="column-name nullable">sha256_stored</text>
+<text x="1150" y="333" text-anchor="end" class="column-type nullable">CHAR(64)?</text>
+<text x="896" y="351" class="column-name nullable">claimed_mime</text>
+<text x="1150" y="351" text-anchor="end" class="column-type nullable">VARCHAR(100)?</text>
+<text x="896" y="369" class="column-name nullable">detected_type</text>
+<text x="1150" y="369" text-anchor="end" class="column-type nullable">VARCHAR(100)?</text>
+<text x="896" y="387" class="column-name nullable">content_type</text>
+<text x="1150" y="387" text-anchor="end" class="column-type nullable">VARCHAR(100)?</text>
+<text x="896" y="405" class="column-name nullable">disposition</text>
+<text x="1150" y="405" text-anchor="end" class="column-type nullable">VARCHAR(10)?</text>
+<text x="896" y="423" class="column-name nullable">storage_key</text>
+<text x="1150" y="423" text-anchor="end" class="column-type nullable">VARCHAR(100)?</text>
+<text x="896" y="441" class="column-name nullable">client_ip</text>
+<text x="1150" y="441" text-anchor="end" class="column-type nullable">VARCHAR(45)?</text>
+<text x="896" y="459" class="column-name">created_at</text>
+<text x="1150" y="459" text-anchor="end" class="column-type">TIMESTAMPTZ</text>
+<text x="896" y="477" class="column-name nullable">deleted_at</text>
+<text x="1150" y="477" text-anchor="end" class="column-type nullable">TIMESTAMPTZ?</text>
+</g>
+<g id="legend">
+<text x="40" y="560" class="legend"><tspan class="key-badge key-pk">PK</tspan> 기본키   <tspan class="key-badge key-fk">FK</tspan> 외래키   <tspan class="key-badge key-uk">UK</tspan> 유니크</text>
+<text x="40" y="580" class="legend"><tspan class="nullable">타입?</tspan> NULL 허용 컬럼</text>
+<text x="40" y="600" class="legend">1 ─────&lt; N   1:N, 양쪽 필수 (FK NOT NULL)</text>
+<text x="40" y="620" class="legend">○ ─ ─ ─ ○   FK 없는 논리적 연결</text>
+<text x="40" y="650" class="legend">PostgreSQL 16 · fileupload · 2026-10-01 조회 · 행 수는 조회 시점 값</text>
+</g>
+</svg>

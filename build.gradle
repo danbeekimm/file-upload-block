@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.study'
+version = '0.1.0'
+description = '파일 업로드 확장자 차단 정책 관리 + 업로드 검증'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    awsSdkVersion = '2.29.9'
+    twelvemonkeysVersion = '3.12.0'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // zip 검사: 일반 목적 플래그(암호화 비트) 확인을 위해 commons-compress 사용
+    implementation 'org.apache.commons:commons-compress:1.27.1'
+
+    // webp 읽기 (PNG로 재저장). 문서 파서가 아닌 이미지 디코더만 추가
+    implementation "com.twelvemonkeys.imageio:imageio-webp:${twelvemonkeysVersion}"
+
+    // S3 저장소
+    implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
+    implementation 'software.amazon.awssdk:s3'
+
+    // JUnit 5, AssertJ, MockMvc, json-path 포함
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// 실행 가능한 bootJar만 생성 (build/libs/file-upload-block-<version>.jar). -plain.jar는 만들지 않는다
+tasks.named('jar') {
+    enabled = false
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // 통합 테스트 전제: docker compose up -d 로 PostgreSQL(55432)이 떠 있어야 한다 (docs/테스트.md)
+    testLogging {
+        events = ['failed']
+        exceptionFormat = 'full'
+    }
+}

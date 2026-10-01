@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>파일 업로드 확장자 차단 관리</title>
+    <style>
+        :root {
+            --border: #d8dbe0; --muted: #6b7280; --accent: #2563eb;
+            --danger: #dc2626; --ok: #16a34a; --bg: #f6f7f9;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; background: var(--bg); color: #1f2937;
+            font-family: "Segoe UI", "Malgun Gothic", system-ui, sans-serif; font-size: 15px;
+        }
+        main { max-width: 780px; margin: 0 auto; padding: 24px 16px 64px; }
+        h1 { font-size: 1.35rem; margin: 8px 0 20px; }
+        section {
+            background: #fff; border: 1px solid var(--border); border-radius: 10px;
+            padding: 20px; margin-bottom: 20px;
+        }
+        h2 { font-size: 1.05rem; margin: 0 0 14px; display: flex; justify-content: space-between; align-items: baseline; }
+        .count { font-size: 0.9rem; color: var(--muted); font-weight: normal; }
+        .fixed-list { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+        .fixed-list label {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;
+            border: 1px solid var(--border); border-radius: 8px; cursor: pointer; user-select: none;
+        }
+        .fixed-list input { width: 16px; height: 16px; accent-color: var(--accent); }
+        .add-row { display: flex; gap: 8px; margin-bottom: 6px; }
+        .add-row input {
+            flex: 1; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px;
+        }
+        .char-count { font-size: 0.8rem; color: var(--muted); margin: 0 0 10px; }
+        button {
+            padding: 9px 16px; border: none; border-radius: 8px; background: var(--accent);
+            color: #fff; font-size: 15px; cursor: pointer;
+        }
+        button:disabled { background: #b6c3e0; cursor: not-allowed; }
+        button.secondary { background: #e5e7eb; color: #374151; }
+        .chips {
+            display: flex; flex-wrap: wrap; gap: 8px; max-height: 220px; overflow-y: auto;
+            padding: 4px 0; margin-top: 8px;
+        }
+        .chip {
+            display: inline-flex; align-items: center; gap: 6px; background: #eef2ff;
+            border: 1px solid #c7d2fe; border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 14px;
+        }
+        .chip button {
+            background: transparent; color: #4b5563; padding: 2px 6px; font-size: 13px; line-height: 1;
+            border-radius: 999px;
+        }
+        .chip button:hover { background: #dbeafe; color: var(--danger); }
+        .msg { min-height: 1.2em; font-size: 0.87rem; margin-top: 8px; }
+        .msg.error { color: var(--danger); }
+        .msg.ok { color: var(--ok); }
+        .hidden { display: none !important; }
+        .retry-box { color: var(--danger); }
+        .file-input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        progress { width: 100%; height: 8px; margin-top: 10px; }
+        ul.results { list-style: none; padding: 0; margin: 12px 0 0; }
+        ul.results li {
+            border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+            display: flex; gap: 10px; align-items: flex-start; font-size: 14px;
+        }
+        .badge {
+            flex-shrink: 0; font-size: 12px; padding: 2px 8px; border-radius: 999px; font-weight: 600;
+        }
+        .badge.stored { background: #dcfce7; color: #166534; }
+        .badge.rejected { background: #fee2e2; color: #991b1b; }
+        .result-body { word-break: break-all; }
+        .result-notice { color: var(--muted); font-size: 13px; margin-top: 2px; }
+        .result-link { font-size: 13px; }
+        .skeleton { color: var(--muted); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>파일 업로드 확장자 차단 관리</h1>
+
+    <!-- 정책 로딩 실패: 빈 목록/0-200을 보여주지 않는다 (명세 10-1) -->
+    <section id="load-error" class="hidden">
+        <p class="retry-box">정책을 불러오지 못했습니다.</p>
+        <button type="button" id="btn-retry">다시 시도</button>
+    </section>
+
+    <section id="fixed-section" aria-labelledby="fixed-title">
+        <h2 id="fixed-title">고정 확장자</h2>
+        <p id="fixed-loading" class="skeleton">정책을 불러오는 중…</p>
+        <div id="fixed-list" class="fixed-list" role="group" aria-label="고정 확장자 차단 목록"></div>
+        <p id="fixed-msg" class="msg" aria-live="polite"></p>
+    </section>
+
+    <section id="custom-section" aria-labelledby="custom-title">
+        <h2 id="custom-title">커스텀 확장자
+            <span class="count" id="custom-count" aria-live="polite"></span>
+        </h2>
+        <div class="add-row">
+            <input id="custom-input" type="text" maxlength="20" autocomplete="off" disabled
+                   placeholder="확장자 입력 (영문·숫자, 최대 20자)" aria-label="추가할 확장자">
+            <button type="button" id="btn-add" disabled>추가</button>
+        </div>
+        <p class="char-count"><span id="char-count">0</span>/20자</p>
+        <p id="custom-msg" class="msg" aria-live="polite"></p>
+        <div id="chips" class="chips" role="list" aria-label="커스텀 차단 확장자 목록"></div>
+    </section>
+
+    <section aria-labelledby="upload-title">
+        <h2 id="upload-title">파일 업로드</h2>
+        <div class="file-input-row">
+            <input type="file" id="file-input" multiple aria-label="업로드할 파일 선택">
+            <button type="button" id="btn-upload">업로드</button>
+        </div>
+        <progress id="upload-progress" max="100" value="0" class="hidden"></progress>
+        <p id="upload-msg" class="msg" aria-live="polite"></p>
+        <ul id="upload-results" class="results" aria-live="polite"></ul>
+    </section>
+</main>
+
+<script>
+(function () {
+    'use strict';
+
+    var state = { loaded: false, fixed: [], custom: [], customMax: 200 };
+
+    var el = function (id) { return document.getElementById(id); };
+    // 파일명 등 모든 사용자 유래 문자열은 textContent로만 넣는다 (XSS 방지, 명세 7장)
+    function text(node, value) { node.textContent = value == null ? '' : String(value); }
+
+    function setMsg(node, message, kind) {
+        node.className = 'msg' + (kind ? ' ' + kind : '');
+        text(node, message || '');
+    }
+
+    async function api(url, options) {
+        var res = await fetch(url, options);
+        if (res.status === 204) return null;
+        var body = null;
+        try { body = await res.json(); } catch (e) { /* 본문 없음 */ }
+        if (!res.ok) {
+            var err = new Error(body && body.message ? body.message : '요청에 실패했습니다.');
+            err.code = body && body.code;
+            err.status = res.status;
+            throw err;
+        }
+        return body;
+    }
+
+    /* ---------- 정책 로딩 ---------- */
+    async function loadPolicies() {
+        el('load-error').classList.add('hidden');
+        try {
+            var view = await api('/api/admin/policies');
+            state.fixed = view.fixed;
+            state.custom = view.custom;
+            state.customMax = view.customMax;
+            state.loaded = true;
+            renderFixed();
+            renderCustom(view.customCount);
+            el('fixed-loading').classList.add('hidden');
+            el('custom-input').disabled = false;
+            updateAddButton();
+        } catch (e) {
+            state.loaded = false;
+            el('load-error').classList.remove('hidden');
+        }
+    }
+
+    /* ---------- 고정 확장자 ---------- */
+    function renderFixed() {
+        var list = el('fixed-list');
+        list.innerHTML = '';
+        state.fixed.forEach(function (item) {
+            var label = document.createElement('label');
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = item.blocked;
+            checkbox.dataset.ext = item.extension;
+            checkbox.addEventListener('change', function () { toggleFixed(item, checkbox); });
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(item.extension));
+            list.appendChild(label);
+        });
+    }
+
+    async function toggleFixed(item, checkbox) {
+        var desired = checkbox.checked;
+        checkbox.disabled = true;                    // 요청 중 중복 방지 (명세 10-1)
+        setMsg(el('fixed-msg'), '');
+        try {
+            var updated = await api('/api/admin/policies/fixed/' + encodeURIComponent(item.extension), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ blocked: desired, version: item.version })
+            });
+            item.blocked = updated.blocked;          // 서버가 확인한 뒤에만 화면 확정
+            item.version = updated.version;
+            checkbox.checked = updated.blocked;
+        } catch (e) {
+            checkbox.checked = !desired;             // 실패 시 원래 상태로 롤백
+            setMsg(el('fixed-msg'), e.message, 'error');
+            if (e.code === 'VERSION_CONFLICT') { await loadPolicies(); }
+        } finally {
+            checkbox.disabled = false;
+        }
+    }
+
+    /* ---------- 커스텀 확장자 ---------- */
+    function renderCustom(count) {
+        text(el('custom-count'), count + ' / ' + state.customMax);
+        var chips = el('chips');
+        chips.innerHTML = '';
+        state.custom.forEach(function (item, index) {
+            var chip = document.createElement('span');
+            chip.className = 'chip';
+            chip.setAttribute('role', 'listitem');
+            var name = document.createElement('span');
+            text(name, item.extension);
+            var remove = document.createElement('button');
+            remove.type = 'button';
+            text(remove, '✕');
+            remove.setAttribute('aria-label', item.extension + ' 삭제');
+            remove.addEventListener('click', function () { removeCustom(item.extension, index); });
+            chip.appendChild(name);
+            chip.appendChild(remove);
+            chips.appendChild(chip);
+        });
+        updateAddButton();
+    }
+
+    function updateAddButton() {
+        var full = state.custom.length >= state.customMax;
+        el('btn-add').disabled = !state.loaded || full;
+        el('custom-input').disabled = !state.loaded || full;
+        if (full) { setMsg(el('custom-msg'), '삭제 후 추가할 수 있습니다.', 'error'); }
+    }
+
+    async function addCustom() {
+        var input = el('custom-input');
+        var raw = input.value.trim();
+        if (!raw) { return; }
+        el('btn-add').disabled = true;
+        setMsg(el('custom-msg'), '');
+        try {
+            var result = await api('/api/admin/policies/custom', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ extension: raw })
+            });
+            state.custom.push({ extension: result.extension });
+            renderCustom(result.count);
+            input.value = '';
+            text(el('char-count'), '0');
+            if (result.corrected) {
+                setMsg(el('custom-msg'), result.extension + '(으)로 저장되었습니다.', 'ok');
+            }
+        } catch (e) {
+            setMsg(el('custom-msg'), e.message, 'error');
+        } finally {
+            updateAddButton();
+            input.focus();                            // 추가 후 입력창 포커스 유지 (명세 10-3)
+        }
+    }
+
+    async function removeCustom(extension, index) {
+        try {
+            await api('/api/admin/policies/custom/' + encodeURIComponent(extension), { method: 'DELETE' });
+            state.custom = state.custom.filter(function (c) { return c.extension !== extension; });
+            renderCustom(state.custom.length);
+            setMsg(el('custom-msg'), '');
+            // 삭제 후 다음 항목으로 포커스 이동 (명세 10-3)
+            var buttons = el('chips').querySelectorAll('button');
+            var target = buttons[Math.min(index, buttons.length - 1)];
+            if (target) { target.focus(); } else { el('custom-input').focus(); }
+        } catch (e) {
+            setMsg(el('custom-msg'), e.message, 'error');
+        }
+    }
+
+    /* ---------- 업로드 ---------- */
+    function renderResults(response) {
+        var list = el('upload-results');
+        list.innerHTML = '';
+        response.results.forEach(function (r) {
+            var li = document.createElement('li');
+            var badge = document.createElement('span');
+            badge.className = 'badge ' + (r.status === 'STORED' ? 'stored' : 'rejected');
+            text(badge, r.status === 'STORED' ? '저장됨' : '거부됨');
+            var body = document.createElement('div');
+            body.className = 'result-body';
+            var name = document.createElement('div');
+            text(name, r.status === 'STORED' ? r.fileName : r.message);
+            body.appendChild(name);
+            (r.notices || []).forEach(function (notice) {
+                var p = document.createElement('div');
+                p.className = 'result-notice';
+                text(p, '안내: ' + notice);
+                body.appendChild(p);
+            });
+            if (r.status === 'STORED' && r.publicId) {
+                var link = document.createElement('a');
+                link.className = 'result-link';
+                link.href = '/api/uploads/' + encodeURIComponent(r.publicId);
+                text(link, r.disposition === 'INLINE' ? '열기' : '다운로드');
+                body.appendChild(link);
+            }
+            li.appendChild(badge);
+            li.appendChild(body);
+            list.appendChild(li);
+        });
+    }
+
+    function upload() {
+        var files = el('file-input').files;
+        if (!files.length) {
+            setMsg(el('upload-msg'), '업로드할 파일을 선택해 주세요.', 'error');
+            return;
+        }
+        var form = new FormData();
+        for (var i = 0; i < files.length; i++) { form.append('files', files[i]); }
+
+        var progress = el('upload-progress');
+        progress.classList.remove('hidden');
+        progress.value = 0;
+        el('btn-upload').disabled = true;
+        setMsg(el('upload-msg'), '');
+        el('upload-results').innerHTML = '';
+
+        var xhr = new XMLHttpRequest();               // 진행률 표시를 위해 XHR 사용 (명세 10-2)
+        xhr.open('POST', '/api/uploads');
+        xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) { progress.value = Math.round(e.loaded / e.total * 100); }
+        });
+        xhr.addEventListener('load', function () {
+            el('btn-upload').disabled = false;
+            progress.classList.add('hidden');
+            var body = null;
+            try { body = JSON.parse(xhr.responseText); } catch (e) { /* ignore */ }
+            if (xhr.status >= 200 && xhr.status < 300 && body) {
+                renderResults(body);
+            } else {
+                setMsg(el('upload-msg'), body && body.message ? body.message : '업로드에 실패했습니다.', 'error');
+            }
+        });
+        xhr.addEventListener('error', function () {
+            el('btn-upload').disabled = false;
+            progress.classList.add('hidden');
+            setMsg(el('upload-msg'), '네트워크 오류가 발생했습니다. 다시 시도해 주세요.', 'error');
+        });
+        xhr.send(form);
+    }
+
+    /* ---------- 이벤트 ---------- */
+    el('btn-retry').addEventListener('click', loadPolicies);
+    el('btn-add').addEventListener('click', addCustom);
+    el('custom-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); addCustom(); }   // Enter로 추가 (명세 10-3)
+    });
+    el('custom-input').addEventListener('input', function (e) {
+        // 클라이언트는 UX용 즉시 피드백만 — 서버가 같은 정규화를 다시 수행한다 (명세 4-1)
+        var cleaned = e.target.value.replace(/[^A-Za-z0-9.]/g, '');
+        if (cleaned !== e.target.value) { e.target.value = cleaned; }
+        text(el('char-count'), String(e.target.value.length));
+    });
+    el('btn-upload').addEventListener('click', upload);
+
+    loadPolicies();
+})();
+</script>
+</body>
+</html>

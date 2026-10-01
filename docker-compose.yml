@@ -1,0 +1,24 @@
+# name: 폴더 이름과 무관하게 compose 프로젝트 이름을 고정 (볼륨 file-upload-block_fileupload-data)
+name: file-upload-block
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: fileupload-db
+    environment:
+      POSTGRES_DB: fileupload
+      POSTGRES_USER: fileupload
+      POSTGRES_PASSWORD: fileupload
+    ports:
+      - "55432:5432"   # 5432는 다른 프로젝트(library-postgres)가 사용 중
+    volumes:
+      # schema.sql이 유일한 스키마 기준. 최초 기동 시 1회 적용됨
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - fileupload-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fileupload -d fileupload"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  fileupload-data:

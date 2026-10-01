@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: file-upload-block
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:55432}/${DB_NAME:fileupload}
+    username: ${DB_USER:fileupload}
+    password: ${DB_PASSWORD:fileupload}
+  jpa:
+    hibernate:
+      ddl-auto: none          # 스키마는 schema.sql이 유일한 기준
+    open-in-view: false
+  servlet:
+    multipart:
+      # 파일별 상한(upload_policy: 이미지 10MB, 그 외 25MB)은 형식을 탐지한 뒤 파이프라인이 파일 단위로 판정한다.
+      # 여기 값이 정책 값과 같으면 그 판정 전에 요청 전체가 413으로 끝나므로, 요청 상한과 같게 둔다 (6장)
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+server:
+  port: ${PORT:8080}
+
+upload:
+  rate-limit:
+    window: 5m
+    max-requests: 10
+  ip-block:
+    window: 10m
+    threshold: 6
+    duration: 5m
+  image:
+    max-pixels: 50000000
+  archive:
+    max-entries: 100          # 이상이면 거부
+    max-ratio: 100            # 이상이면 거부
+    max-total-uncompressed: 200MB
+  inspect:
+    head-bytes: 8192
+
+storage:
+  mode: ${STORAGE_MODE:local}   # local | s3
+  local:
+    dir: ${STORAGE_DIR:./data/objects}
+  s3:
+    bucket: ${S3_BUCKET:work-841820566166-us-east-1-an}
+    region: ${S3_REGION:us-east-1}
+    prefix: ${S3_PREFIX:uploads/}
+    # 자격 증명: .env(.env.example)의 AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY 그대로 사용.
+    # 둘 다 비어 있으면 SDK 기본 체인(EC2 인스턴스 역할 등)으로 폴백. 값은 코드/저장소에 두지 않는다 (.env는 미커밋)
+    access-key-id: ${AWS_ACCESS_KEY_ID:}
+    secret-access-key: ${AWS_SECRET_ACCESS_KEY:}
+
+logging:
+  level:
+    com.study.fileupload: INFO
