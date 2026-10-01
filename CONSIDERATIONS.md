@@ -130,7 +130,7 @@ DB 제약은 마지막 방어선이지 판정 수단이 아니므로(1장), 확�
 | 항목 | 제외 이유 / 실서비스라면 |
 |---|---|
 | 인증·인가 | 과제 요구에 없고 누구나 시연 가능해야 함. 경로를 `/api/admin/**`로 분리해 도입 시 경로 단위 권한만 얹으면 됨. `ActorResolver` 교체 지점도 마련 |
-| 프록시 뒤 실제 IP (X-Forwarded-For) | 배포 토폴로지가 정해져야 신뢰할 프록시 홉 수를 정할 수 있음. 지금 넣으면 헤더 위조로 IP 차단이 우회됨 |
+| 프록시 뒤 실제 IP (X-Forwarded-For) | 토폴로지 확정 전에는 헤더 위조로 IP 차단이 우회되므로 코드에 넣지 않음. 배포 토폴로지(같은 호스트 nginx → 127.0.0.1)가 확정된 뒤 설정으로만 해결: `server.forward-headers-strategy=native`(Tomcat RemoteIpValve, 기본 신뢰 프록시는 사설/루프백 대역)와 nginx 의 `X-Forwarded-For $remote_addr`(클라이언트가 보낸 헤더 폐기) 조합. 코드는 계속 `getRemoteAddr()` 만 사용 (docs/배포가이드.md 1장) |
 | 바이러스 스캔 (ClamAV 등) | 데모 범위 밖. 실서비스라면 저장 후 비동기 스캔 + 격리 상태 도입 |
 | webp 인코딩 테스트 픽스처 | Java 표준·TwelveMonkeys 모두 webp 쓰기 미지원이라 픽스처 생성이 어려움. 읽기 경로는 시그니처 단위 테스트로, 실파일은 수동 테스트로 커버 (docs/테스트.md) |
 | Office 문서 내용 검사 | 파서 위험·비용 대비 효과 낮음. 비신뢰 attachment로 제공하고 사용자 PC의 Office 보안 설정에 위임 (명세 17장) |

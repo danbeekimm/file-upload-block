@@ -1,0 +1,38 @@
+# 운영 VM용 compose — GitHub Actions가 이 파일과 .env, schema.sql, deploy.sh를 서버의 APP_DIR로 복사해 실행한다.
+#   docker compose up -d --wait
+#
+# 토폴로지: 인터넷 → nginx(기존, 80/443) → 127.0.0.1:${APP_PORT} → 앱 → 127.0.0.1:5432 (VM의 기존 PostgreSQL)
+#   - network_mode: host — 호스트의 PostgreSQL에 127.0.0.1:5432로 바로 붙는다 (pg_hba/listen_addresses 변경 불필요).
+#     네이티브 설치든 5432를 호스트에 공개한 컨테이너든 동일하게 동작한다.
+#   - SERVER_ADDRESS=127.0.0.1 — 앱은 루프백에만 바인드되어 nginx를 거치지 않고는 외부에서 접근할 수 없다.
+#   - FORWARD_HEADERS_STRATEGY=native — nginx가 넣는 X-Forwarded-For를 신뢰해 IP 제한/차단이 실제 클라이언트 IP로 동작.
+# 값은 같은 디렉터리의 .env(APP_PORT, DB_*, STORAGE_MODE, S3_*, AWS_*)에서 읽는다. .env는 워크플로가 GitHub Secrets로 생성한다.
+name: file-upload-block
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/danbeekimm/file-upload-block:latest}
+    container_name: file-upload-block
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    environment:
+      PORT: ${APP_PORT:-8090}
+      SERVER_ADDRESS: 127.0.0.1
+      FORWARD_HEADERS_STRATEGY: native
+      DB_HOST: 127.0.0.1
+      DB_PORT: ${DB_PORT:-5432}
+      # local 모드 폴백용: 비루트 appuser가 쓸 수 있는 경로 (컨테이너 내부라 휘발 — 운영은 s3)
+      STORAGE_DIR: /home/appuser/data
+      AWS_REGION: ${S3_REGION:-us-east-1}
+    healthcheck:
+      # 정책 조회는 DB까지 왕복하므로 "DB 연결 포함 준비 완료"의 의미. 런타임 이미지(eclipse-temurin)에 curl 포함
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${APP_PORT:-8090}/api/admin/policies > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

@@ -8,3 +8,5 @@ docs/
 .git/
 .idea/
 .vscode/
+deploy/
+.github/

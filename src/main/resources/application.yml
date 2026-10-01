@@ -18,6 +18,12 @@ spring:
 
 server:
   port: ${PORT:8080}
+  # 바인드 주소. 운영(deploy/docker-compose.yml)은 127.0.0.1 — nginx만 접근 가능, 외부 직접 노출 없음
+  address: ${SERVER_ADDRESS:0.0.0.0}
+  # none(기본) | native. native면 Tomcat RemoteIpValve가 X-Forwarded-For/Proto를 해석해 getRemoteAddr()가
+  # 실제 클라이언트 IP를 돌려준다. 기본 신뢰 프록시는 사설/루프백 대역이라 같은 호스트의 nginx만 신뢰된다.
+  # 운영 토폴로지(nginx → 127.0.0.1:PORT)가 확정된 배포에서만 켠다 (CONSIDERATIONS.md, docs/배포가이드.md)
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:none}
 
 upload:
   rate-limit:

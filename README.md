@@ -9,7 +9,7 @@
 | [CONSIDERATIONS.md](CONSIDERATIONS.md) | 고려사항과 판단 근거 |
 | [PROMPT_LOG.md](PROMPT_LOG.md) | AI 활용 기록 |
 | [docs/테스트.md](docs/테스트.md) | 테스트 전략·시나리오·실행 결과 |
-| [docs/배포가이드.md](docs/배포가이드.md) | EC2 배포 절차 (Dockerfile + docker-compose.prod.yml) |
+| [docs/배포가이드.md](docs/배포가이드.md) | GitHub Actions → GHCR → SSH 배포 (기존 nginx/PostgreSQL 연동, `deploy/`) |
 | [docs/소스구조.md](docs/소스구조.md) | 소스 구조와 처리 흐름 (패키지, 판정 파이프라인, 데이터 모델) |
 | [docs/ERD.md](docs/ERD.md) | ERD (실행 중인 DB 카탈로그 기준, Mermaid) |
 | [docs/결함보고.md](docs/결함보고.md) | 재현 확인된 결함 4건 (증상·원인·수정 방향) |
