@@ -152,7 +152,7 @@ jobs:
       - name: 서버 .env 생성 (GitHub Secrets/Variables → 서버)
         run: |
           # 변수 미설정 시 기본값. 비밀값은 Secrets, 그 외는 Variables 에서 읽는다
-          # 따옴표 붙인 heredoc: ${{ }} 는 GitHub 이 먼저 치환하고, 치환된 값 안의 $ 등은 셸이 해석하지 않는다
+          # 따옴표 붙인 heredoc: GitHub 표현식은 러너가 스크립트를 받기 전에 치환되고, 치환된 값 안의 $ 등은 셸이 해석하지 않는다
           cat > app.env <<'ENV'
           APP_PORT=${{ vars.APP_PORT || '8090' }}
           DB_PORT=${{ vars.DB_PORT || '5432' }}
