@@ -11,6 +11,7 @@ set -euo pipefail
 
 : "${APP_DIR:?APP_DIR 필요}"
 : "${APP_IMAGE:?APP_IMAGE 필요}"
+APP_DIR="${APP_DIR/#\~/$HOME}"   # 워크플로가 '~/...' 를 따옴표로 넘기면 틸드가 확장되지 않으므로 여기서 직접 확장
 cd "$APP_DIR"
 
 # .env 의 값(APP_PORT, DB_*)을 스크립트에서도 쓴다. compose 는 같은 파일을 자체적으로 읽는다.
